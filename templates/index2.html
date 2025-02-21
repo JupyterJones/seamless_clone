@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Seamless Cloning</title>
+    <script>
+        let points = [];
+        let center = null;
+
+        function selectObjectPoint(event) {
+            points.push([event.offsetX, event.offsetY]);
+            console.log("Selected object points:", points);
+        }
+
+        function selectPastePosition(event) {
+            center = [event.offsetX, event.offsetY];
+            console.log("Selected paste position on background:", center);
+        }
+
+        function applyCloning() {
+            if (points.length < 3 || !center) {
+                alert("Select at least 3 points on the object and 1 center point on the background.");
+                return;
+            }
+
+            fetch("/clone", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ points: points, center: center })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").src = data.result_url;
+                document.getElementById("result-container").style.display = "block";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+    <h2>Upload Images</h2>
+    <a style = "font-size: 35px;" href="/">Home</a>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="background" required>
+        <input type="file" name="object" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if bg_path and obj_path %}
+        <h2>Select Area on the Object Image (Red Border)</h2>
+        <img id="object_img" src="{{ obj_path }}" onclick="selectObjectPoint(event)" style="border:2px solid red; cursor: crosshair; display:block;">
+
+        <h2>Select Paste Position on the Background Image (Blue Border)</h2>
+        <img id="background_img" src="{{ bg_path }}" onclick="selectPastePosition(event)" style="border:2px solid blue; cursor: crosshair; display:block;">
+
+        <button onclick="applyCloning()">Apply Cloning</button>
+
+        <div id="result-container" style="display:none;">
+            <h2>Result (Background with Object Pasted)</h2>
+            <img id="result" src="">
+        </div>
+    {% endif %}
+</body>
+</html>

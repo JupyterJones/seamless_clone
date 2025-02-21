@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Seamless Cloning</title>
+    <script>
+        let points = [];
+        let center = null;
+
+        function selectPoint(event) {
+            points.push([event.offsetX, event.offsetY]);
+            console.log("Selected points:", points);
+        }
+
+        function selectCenter(event) {
+            center = [event.offsetX, event.offsetY];
+            console.log("Center selected:", center);
+        }
+
+        function applyCloning() {
+            if (points.length < 3 || !center) {
+                alert("Select at least 3 points on the object and 1 center point on the background.");
+                return;
+            }
+
+            fetch("/clone", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ points: points, center: center })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").src = data.result_url;
+                document.getElementById("result-container").style.display = "block";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+    <h2>Upload Images</h2>
+    home
+    <a href="/">Home</a>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="background" required>
+        <input type="file" name="object" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if bg_path and obj_path %}
+        <h2>Click on the Object Image to Select Area</h2>
+        <img id="object_img" src="{{ bg_path }}" onclick="selectPoint(event)" style="border:2px solid red; cursor: crosshair; display:block;">
+
+        <h2>Click on the Background Image to Set Paste Position</h2>
+        <img id="background_img" src="{{ obj_path }}" onclick="selectCenter(event)" style="border:2px solid blue; cursor: crosshair; display:block;">
+
+        <button onclick="applyCloning()">Apply Cloning</button>
+
+        <div id="result-container" style="display:none;">
+            <h2>Result</h2>
+            <img id="result" src="">
+        </div>
+    {% endif %}
+</body>
+</html>
